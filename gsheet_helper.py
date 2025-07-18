@@ -2,9 +2,9 @@ import gspread
 import pandas as pd
 from google.oauth2.service_account import Credentials
 import streamlit as st
-
+import json
 # Path to your service account key file
-SERVICE_ACCOUNT_FILE = 'centralautomationdashboard-cbcd913bcd93.json'
+SERVICE_ACCOUNT_INFO = st.secrets["gcp_service_account"]
 
 # Use both Sheets and Drive scopes!
 SCOPES = [
@@ -16,7 +16,7 @@ SCOPES = [
 SHEET_NAME = 'CentralAutomationDB'
 
 # Authorize gspread client
-creds = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+creds = Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO, scopes=SCOPES)
 client = gspread.authorize(creds)
 
 def get_sheet(sheet_name):
