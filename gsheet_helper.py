@@ -2,22 +2,21 @@ import gspread
 import pandas as pd
 from google.oauth2.service_account import Credentials
 import streamlit as st
-import json
-# Path to your service account key file
-SERVICE_ACCOUNT_INFO = st.secrets["gcp_service_account"]
 
-# Use both Sheets and Drive scopes!
+# Read credentials from Streamlit secrets (make sure you added them via the Streamlit Cloud "Edit secrets" panel!)
+SERVICE_ACCOUNT_INFO = dict(st.secrets["service_account"])
+
 SCOPES = [
-    'https://www.googleapis.com/auth/spreadsheets',
-    'https://www.googleapis.com/auth/drive'
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
 ]
 
-# Main Spreadsheet name (or spreadsheet ID)
-SHEET_NAME = 'CentralAutomationDB'
-
-# Authorize gspread client
+# Authorize the gspread client
 creds = Credentials.from_service_account_info(SERVICE_ACCOUNT_INFO, scopes=SCOPES)
 client = gspread.authorize(creds)
+
+# Set your Google Spreadsheet name here
+SHEET_NAME = 'CentralAutomationDB'
 
 def get_sheet(sheet_name):
     """Return the worksheet object, create it if not exists."""
@@ -28,12 +27,12 @@ def get_sheet(sheet_name):
         ws = sh.add_worksheet(title=sheet_name, rows="1000", cols="20")
     return ws
 
-@st.cache_data(ttl=180)  # cache for 3 minutes, reduce API quota issues
 def load_sheet_from_db(sheet_name):
     """Load data from Google Sheet worksheet into pandas DataFrame."""
     ws = get_sheet(sheet_name)
     data = ws.get_all_values()
     if not data or len(data) < 2:
+        # If no data or only header row
         return pd.DataFrame()
     header, *values = data
     df = pd.DataFrame(values, columns=header)
@@ -49,5 +48,3 @@ def save_sheet_to_db(sheet_name, df):
     rows = df.astype(str).values.tolist()
     if rows:
         ws.append_rows(rows)
-    # Invalidate Streamlit cache so new data shows up immediately
-    load_sheet_from_db.clear(sheet_name)
